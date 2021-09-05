@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using todos.api.Entities;
 
 namespace todos.api.Abstractions.Helpers
 {
-    public interface IEncriptionHelper
+    public interface IEncryptionHelper
     {
         public string EncryptString(string plainText);
         public int GetUserIdFromBearerToken(string bearerToken);
+        public string CreateToken(User user);
     }
 }

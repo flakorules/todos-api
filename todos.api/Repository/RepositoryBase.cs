@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using todos.api.Persistency;
+﻿using todos.api.Persistency;
 
 namespace todos.api.Repository
 {

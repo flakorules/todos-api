@@ -14,9 +14,9 @@ namespace todos.api.Repository
 {
     public class TodoRepository : RepositoryBase, ITodoRepository
     {
-        private readonly IEncriptionHelper _encriptionHelper;
+        private readonly IEncryptionHelper _encriptionHelper;
 
-        public TodoRepository(TodosDBContext context, IEncriptionHelper encriptionHelper) : base(context)
+        public TodoRepository(TodosDBContext context, IEncryptionHelper encriptionHelper) : base(context)
         {
             _encriptionHelper = encriptionHelper;
         }

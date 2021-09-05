@@ -1,25 +1,28 @@
 ﻿using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using todos.api.Abstractions.Helpers;
 using todos.api.Config;
+using todos.api.Entities;
 
 namespace todos.api.Helpers
 {
-    public class EncryptionHelper: IEncriptionHelper
+    public class EncryptionHelper: IEncryptionHelper
     {
 
         private readonly EncryptionConfig _encryptionConfig;
+        private readonly JwtConfig _jwtConfig;
 
-        public EncryptionHelper(IOptions<EncryptionConfig> myConfiguration)
+        public EncryptionHelper(IOptions<EncryptionConfig> myConfiguration, IOptions<JwtConfig> jwtConfig)
         {
             _encryptionConfig = myConfiguration.Value;
+            _jwtConfig = jwtConfig.Value;
         }
 
         public string EncryptString(string plainText)
@@ -40,6 +43,27 @@ namespace todos.api.Helpers
                 array = memoryStream.ToArray();
             }
             return Convert.ToBase64String(array);
+        }
+
+        public string CreateToken(User user)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var tokenKey = Encoding.ASCII.GetBytes(_jwtConfig.Key);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+
+                        new Claim("UserId", user.UserId.ToString()),
+                        new Claim(ClaimTypes.Name, user.UserName)
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+
+            return tokenHandler.WriteToken(token);
         }
 
         public int GetUserIdFromBearerToken(string bearerToken)
