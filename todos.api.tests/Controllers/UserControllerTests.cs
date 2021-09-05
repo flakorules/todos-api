@@ -79,5 +79,49 @@ namespace todos.api.tests.Controllers
             Assert.True(expected.Value.ToString().Equals(result.Value.ToString()));
 
         }
+
+        [Fact]
+        public async Task GetByUserName_Successful()
+        {
+            // Arrange
+            var mockRepo = new Mock<IUserRepository>();
+            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).ReturnsAsync(new GetUserResponseDTO()
+            {
+                UserId = 1,
+                UserName = "cristian",
+                Name = "cristian"
+            });
+            var controller = new UserController(mockRepo.Object);
+            string userName = "cristian";
+            var expected = new GetUserResponseDTO()
+            {
+                UserId = 1,
+                UserName = "cristian",
+                Name = "cristian"
+            };
+            
+            // Act
+            var result = (ObjectResult)await controller.GetByUserName(userName);
+            // Assert
+            Assert.True( expected.UserId == ((GetUserResponseDTO)result.Value).UserId );
+
+        }
+
+        [Fact]
+        public async Task GetByUserName_Failed()
+        {
+            // Arrange
+            var mockRepo = new Mock<IUserRepository>();
+            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).ReturnsAsync((GetUserResponseDTO)null);
+            var controller = new UserController(mockRepo.Object);
+            string userName = "cristian";
+            var expected = new NotFoundObjectResult(new { OK = false, message = $"Usuario {userName} no encontrado." });
+
+            // Act
+            var result = (NotFoundObjectResult)await controller.GetByUserName(userName);
+            // Assert
+            Assert.True(expected.Value.ToString().Equals(result.Value.ToString()));
+
+        }
     }
 }

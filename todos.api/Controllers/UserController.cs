@@ -36,6 +36,25 @@ namespace todos.api.Controllers
         }
 
         /// <summary>
+        /// Devuelve los datos del usuario a partir del userName
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <returns></returns>
+        [HttpGet("{userName}")]
+        public async Task<IActionResult> GetByUserName(string userName)
+        {
+            var user = await _userRepository.GetByUserName(userName);
+            if (user != null) 
+            {
+                return Ok(user);
+            } 
+            else 
+            {
+                return NotFound(new { OK = false, message = $"Usuario {userName} no encontrado." });
+            }
+        }
+
+        /// <summary>
         /// Autentica un usuario y devuelve token para ser utilizado para las peticiones en endpoint de Todos
         /// </summary>
         /// <param name="request"></param>

@@ -37,6 +37,26 @@ namespace todos.api.Repository
             }
         }
 
+        public async Task<GetUserResponseDTO> GetByUserName(string userName)
+        {
+            var foundUser = _context.Users.FirstOrDefault(user => user.UserName == userName);
+
+            if (foundUser == null)
+            {
+                return null;
+            }
+
+            var user = new GetUserResponseDTO()
+            {
+                UserId = foundUser.UserId,
+                UserName = foundUser.UserName,
+                Name = foundUser.Name
+            };
+
+            return user;
+        }
+        
+
         public async Task<bool> RegisterUser(RegisterUserRequestDTO request)
         {
             var foundUser = _context.Users.FirstOrDefault(user => user.UserName == request.UserName);
