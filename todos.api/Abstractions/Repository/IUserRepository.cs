@@ -5,9 +5,9 @@ namespace todos.api.Abstractions.Repository
 {
     public interface IUserRepository
     {
-        Task<bool> RegisterUser(RegisterUserRequestDTO request);
-        Task<string> AuthenticateUser(AuthenticateUserRequestDTO request);
-        Task<GetUserResponseDTO> GetByUserName(string userName);
+        Task<GenericResponseDTO<RegisterUserResponseDTO>> RegisterUser(RegisterUserRequestDTO request);
+        GenericResponseDTO<string> AuthenticateUser(AuthenticateUserRequestDTO request);
+        GenericResponseDTO<GetUserResponseDTO> GetByUserName(string userName);
     }
 
 }

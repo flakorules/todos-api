@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using AutoMapper;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,81 +18,170 @@ namespace todos.api.Repository
     {
         private readonly IEncryptionHelper _encriptionHelper;
 
-        public TodoRepository(TodosDBContext context, IEncryptionHelper encriptionHelper) : base(context)
+        public TodoRepository(TodosDBContext context, IEncryptionHelper encriptionHelper, IMapper mapper) : base(context,mapper)
         {
             _encriptionHelper = encriptionHelper;
         }
 
-        public async Task<Todo> Create(CreateTodoRequestDTO request, string bearerToken)
+        public async Task<GenericResponseDTO<Todo>> Create(CreateTodoRequestDTO request, string bearerToken)
         {
-            var userIdInBearerToken = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
-
-            var newTodo = new Todo()
+            try
             {
-                UserId = userIdInBearerToken,
-                Name = request.Name,
-                Solved = false,
-                Description = request.Description,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now,
-            };
-            _context.Todos.Add(newTodo);
-            await _context.SaveChangesAsync();
-            
-            return newTodo;
+                #region
+                var newTodo = _mapper.Map<Todo>(request);
+                newTodo.UserId = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
+                newTodo.Solved = false;
+                newTodo.CreatedAt = DateTime.Now;
+                newTodo.UpdatedAt = DateTime.Now;
+
+                _context.Todos.Add(newTodo);
+                await _context.SaveChangesAsync();
+
+                return new GenericResponseDTO<Todo>()
+                {
+                    ErrorCode = "000",
+                    Message = "Todo was created succesfully",
+                    Data = newTodo
+                }; 
+                #endregion
+            }
+            catch (SqlException)
+            {
+                throw new GenericRepositoryException("020", $"Error connecting to the Database.");   
+            }            
         }
 
-        public async Task<bool> Delete(int todoId, string bearerToken)
+        public async Task<GenericResponseDTO<bool>> Delete(int todoId, string bearerToken)
         {
-            var todo = _context.Todos.FirstOrDefault(obj => obj.TodoId == todoId);
-            
-            if (todo == null)
+            try
             {
-                return false;
+                #region
+                var todo = _context.Todos.FirstOrDefault(obj => obj.TodoId == todoId);
+                if (todo == null)
+                {
+                    throw new GenericRepositoryException("004", $"Todo {todoId} was not found.");
+                }
+
+                var userIdInBearerToken = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
+                if (userIdInBearerToken != todo.UserId)
+                {
+                    throw new GenericRepositoryException("005", $"Not authorized to delete other's todos.");
+                }
+
+                _context.Todos.Remove(todo);
+
+                if (await _context.SaveChangesAsync() > 0)
+                {
+                    return new GenericResponseDTO<bool>()
+                    {
+                        ErrorCode = "000",
+                        Message = $"Todo {todoId} was deleted successfully",
+                        Data = true
+                    };
+                }
+                else
+                {
+                    return new GenericResponseDTO<bool>()
+                    {
+                        ErrorCode = "006",
+                        Message = $"Todo {todoId} was not deleted",
+                        Data = false
+                    };
+                }
+                #endregion
             }
-
-            var userIdInBearerToken = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
-
-            if(userIdInBearerToken != todo.UserId)
+            catch (SqlException)
             {
-                throw new UnauthorizedException("No está autorizado a eliminar los Todos de otro usuario.");
+                throw new GenericRepositoryException("020", $"Error connecting to the Database.");
             }
-
-            _context.Todos.Remove(todo);
-            return await _context.SaveChangesAsync() > 0;            
         }
 
-        public async Task<IEnumerable<Todo>> GetByUserId(int userId, string bearerToken)
+        public async Task<GenericResponseDTO<IEnumerable<Todo>>> GetByUserId(string bearerToken)
         {
-            var userIdInBearerToken = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
-
-            if (userIdInBearerToken != userId)
+            try
             {
-                throw new UnauthorizedException("No está autorizado a ver los Todos de otro usuario.");
+                var userIdInBearerToken = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
+
+                return new GenericResponseDTO<IEnumerable<Todo>>()
+                {
+                    ErrorCode = "000",
+                    Message = $"Todos from userId {userIdInBearerToken}",
+                    Data = await _context.Todos.Where(todo => todo.UserId == userIdInBearerToken).ToListAsync()
+                };
+            }
+            catch (Exception)
+            {
+                throw new GenericRepositoryException("020", $"Error connecting to the Database.");
             }
 
-            return await _context.Todos.Where(todo => todo.UserId == userId).ToListAsync();
         }
 
-        public async Task<bool> Solve(int todoId, string bearerToken)
+        public async Task<GenericResponseDTO<bool>> Solve(int todoId, string bearerToken)
         {
-            var todo = _context.Todos.FirstOrDefault(obj => obj.TodoId == todoId);
-            if (todo == null)
+            try
             {
-                return false;
+                #region
+                var todo = _context.Todos.FirstOrDefault(obj => obj.TodoId == todoId);
+                if (todo == null)
+                {
+                    throw new GenericRepositoryException("007", $"todoId {todoId} doesn't exist");
+                }
+
+                var userIdInBearerToken = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
+                if (userIdInBearerToken != todo.UserId)
+                {
+                    throw new GenericRepositoryException("005", $"Not authorized to Solve other's todos.");
+                }
+
+                todo.Solved = true;
+                todo.UpdatedAt = DateTime.Now;
+                if (await _context.SaveChangesAsync() > 0)
+                {
+                    return new GenericResponseDTO<bool>()
+                    {
+                        ErrorCode = "000",
+                        Message = $"Todo {todoId} was solved succesfully.",
+                        Data = true
+                    };
+                }
+                else
+                {
+                    return new GenericResponseDTO<bool>()
+                    {
+                        ErrorCode = "006",
+                        Message = $"Todo {todoId} was not solved.",
+                        Data = true
+                    };
+                }
+                #endregion
+            }
+            catch (SqlException)
+            {
+                throw new GenericRepositoryException("020", $"Error connecting to the Database.");
             }
 
-            var userIdInBearerToken = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
+        }
 
-            if (userIdInBearerToken != todo.UserId)
+        public GenericResponseDTO<Todo> GetById(int todoId)
+        {
+            try
             {
-                throw new UnauthorizedException("No está autorizado a resolver los Todos de otro usuario.");
+                #region
+
+                var todo = _context.Todos.Where(todo => todo.TodoId == todoId).FirstOrDefault();               
+
+                return new GenericResponseDTO<Todo>()
+                {
+                    ErrorCode = "000",
+                    Message = $"Data from TodoId {todo.TodoId}",
+                    Data = todo
+                };
+                #endregion
             }
-
-            todo.Solved = true;
-            todo.UpdatedAt = DateTime.Now;
-
-            return await _context.SaveChangesAsync() > 0;
+            catch (SqlException)
+            {
+                throw new GenericRepositoryException("020", $"Error connecting to the Database.");
+            }
         }
     }
 }

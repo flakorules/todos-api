@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -16,6 +17,7 @@ using todos.api.Abstractions.Repository;
 using todos.api.Config;
 using todos.api.Helpers;
 using todos.api.Persistency;
+using todos.api.Profiles;
 using todos.api.Repository;
 
 namespace todos.api
@@ -59,6 +61,16 @@ namespace todos.api
                         ValidateIssuer = false
                     };
                 });
+
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new MappingProfile());
+            });
+
+            IMapper mapper = mappingConfig.CreateMapper();
+            services.AddSingleton(mapper);
+
+
             services.AddAuthorization();
 
 

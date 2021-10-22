@@ -1,14 +1,16 @@
-﻿using todos.api.Persistency;
+﻿using AutoMapper;
+using todos.api.Persistency;
 
 namespace todos.api.Repository
 {
     public abstract class RepositoryBase
     {
         protected TodosDBContext _context;
-
-        public RepositoryBase(TodosDBContext context)
+        protected IMapper _mapper;
+        public RepositoryBase(TodosDBContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
     }
 }

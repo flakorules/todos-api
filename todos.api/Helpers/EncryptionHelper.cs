@@ -53,9 +53,8 @@ namespace todos.api.Helpers
             {
                 Subject = new ClaimsIdentity(new Claim[]
                 {
-
-                        new Claim("UserId", user.UserId.ToString()),
-                        new Claim(ClaimTypes.Name, user.UserName)
+                    new Claim("UserId", user.UserId.ToString()),
+                    new Claim(ClaimTypes.Name, user.UserName)
                 }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)

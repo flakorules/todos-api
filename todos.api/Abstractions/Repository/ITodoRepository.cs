@@ -7,9 +7,10 @@ namespace todos.api.Abstractions.Repository
 {
     public interface ITodoRepository
     {
-        Task<Todo> Create(CreateTodoRequestDTO request, string bearerToken);
-        Task<bool> Solve(int todoId, string bearerToken);
-        Task<bool> Delete(int todoId, string bearerToken);
-        Task<IEnumerable<Todo>> GetByUserId(int userId, string bearerToken);
+        Task<GenericResponseDTO<Todo>> Create(CreateTodoRequestDTO request, string bearerToken);
+        Task<GenericResponseDTO<bool>> Solve(int todoId, string bearerToken);
+        Task<GenericResponseDTO<bool>> Delete(int todoId, string bearerToken);
+        Task<GenericResponseDTO<IEnumerable<Todo>>> GetByUserId(string bearerToken);
+        GenericResponseDTO<Todo> GetById(int todoId);
     }
 }

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using todos.api.Abstractions.Repository;
 using todos.api.DTO;
+using todos.api.Exceptions.Repository;
 
 namespace todos.api.Controllers
 {
@@ -25,13 +26,19 @@ namespace todos.api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterUserRequestDTO request)
         {
-            if(await _userRepository.RegisterUser(request))
+            try
             {
-                return Ok(new { OK = true, message = $"Usuario {request.UserName} creado correctamente." });
+                var resp = await _userRepository.RegisterUser(request);
+                return CreatedAtAction(nameof(GetByUserName), new { userName = request.UserName }, resp);
             }
-            else
+            catch (GenericRepositoryException exception)
             {
-                return BadRequest(new { OK = false, message = $"Error al crear el Usuario {request.UserName}." });
+                return BadRequest(new GenericResponseDTO<RegisterUserResponseDTO>()
+                {
+                    ErrorCode = exception.ErrorCode,
+                    Message = exception.Message,
+                    Data = null
+                });
             }
         }
 
@@ -41,16 +48,22 @@ namespace todos.api.Controllers
         /// <param name="userName"></param>
         /// <returns></returns>
         [HttpGet("{userName}")]
-        public async Task<IActionResult> GetByUserName(string userName)
+        public IActionResult GetByUserName(string userName)
         {
-            var user = await _userRepository.GetByUserName(userName);
-            if (user != null) 
+            try
             {
+                var user = _userRepository.GetByUserName(userName);
                 return Ok(user);
-            } 
-            else 
+            }
+            catch (GenericRepositoryException exception)
             {
-                return NotFound(new { OK = false, message = $"Usuario {userName} no encontrado." });
+                var resp = new GenericResponseDTO<GetUserResponseDTO>()
+                {
+                    ErrorCode = exception.ErrorCode,
+                    Message = exception.Message,
+                    Data = null
+                };
+                return NotFound(resp);
             }
         }
 
@@ -60,18 +73,26 @@ namespace todos.api.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("authenticate")]
-        public async Task<IActionResult> Authenticate(AuthenticateUserRequestDTO request)
+        public IActionResult Authenticate(AuthenticateUserRequestDTO request)
         {
-            var authToken = await _userRepository.AuthenticateUser(request);
+            try
+            {
+                var resp = _userRepository.AuthenticateUser(request);
+                return Ok(resp);
+            }
+            catch (GenericRepositoryException exception)
+            {
+                var resp = new GenericResponseDTO<string>()
+                {
+                    ErrorCode = exception.ErrorCode,
+                    Message = exception.Message,
+                    Data = null
+                };
 
-            if (!string.IsNullOrEmpty(authToken))
-            {
-                return Ok(new { OK = true, token = authToken });
+                return BadRequest(resp);
+
             }
-            else
-            {
-                return BadRequest(new { OK = false, message = $"Error al autenticar el Usuario {request.UserName}." });
-            }
+
         }
     }
 }

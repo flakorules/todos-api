@@ -1,9 +1,11 @@
-﻿using System.Linq;
+﻿using AutoMapper;
+using System.Linq;
 using System.Threading.Tasks;
 using todos.api.Abstractions.Helpers;
 using todos.api.Abstractions.Repository;
 using todos.api.DTO;
 using todos.api.Entities;
+using todos.api.Exceptions.Repository;
 using todos.api.Persistency;
 
 namespace todos.api.Repository
@@ -12,70 +14,73 @@ namespace todos.api.Repository
     {
         private readonly IEncryptionHelper _encryptionHelper;
         
-        public UserRepository(TodosDBContext context, IEncryptionHelper encryptionHelper) : base(context)
+        public UserRepository(TodosDBContext context, IEncryptionHelper encryptionHelper, IMapper mapper) : base(context, mapper)
         {
-            _encryptionHelper = encryptionHelper;            
+            _encryptionHelper = encryptionHelper;
         }
 
-        public async Task<string> AuthenticateUser(AuthenticateUserRequestDTO request)
+        public GenericResponseDTO<string> AuthenticateUser(AuthenticateUserRequestDTO request)
         {
-            var foundUser = _context.Users.FirstOrDefault(user => user.UserName == request.UserName);
-            
+            var foundUser = _context.Users
+                .FirstOrDefault(user => user.UserName == request.UserName
+                && user.Password == _encryptionHelper.EncryptString(request.Password));
+
             if (foundUser == null)
             {
-                return string.Empty;
+                throw new GenericRepositoryException("002", $"Error authenticating user {request.UserName}.");
             }
 
+            return new GenericResponseDTO<string>()
+            {
+                ErrorCode = "000",
+                Message = $"User {request.UserName} was authenticated correctly.",
+                Data = _encryptionHelper.CreateToken(foundUser)
 
-            if (_encryptionHelper.EncryptString(request.Password) == foundUser.Password)
-            {
-                return _encryptionHelper.CreateToken(foundUser);
-            }
-            else
-            {
-                return string.Empty;
-            }
+            };
         }
 
-        public async Task<GetUserResponseDTO> GetByUserName(string userName)
+        public GenericResponseDTO<GetUserResponseDTO> GetByUserName(string userName)
         {
             var foundUser = _context.Users.FirstOrDefault(user => user.UserName == userName);
 
             if (foundUser == null)
             {
-                return null;
+                throw new GenericRepositoryException("003", $"User {userName} was not found.");
             }
 
-            var user = new GetUserResponseDTO()
+            return new GenericResponseDTO<GetUserResponseDTO>()
             {
-                UserId = foundUser.UserId,
-                UserName = foundUser.UserName,
-                Name = foundUser.Name
+                ErrorCode = "000",
+                Message = $"User name {userName}",
+                Data = _mapper.Map<GetUserResponseDTO>(foundUser)
             };
-
-            return user;
         }
         
-
-        public async Task<bool> RegisterUser(RegisterUserRequestDTO request)
+        public async Task<GenericResponseDTO<RegisterUserResponseDTO>> RegisterUser(RegisterUserRequestDTO request)
         {
+
             var foundUser = _context.Users.FirstOrDefault(user => user.UserName == request.UserName);
 
-            if(foundUser != null)
+            if (foundUser != null)
             {
-                return false;
+                throw new GenericRepositoryException("001", $"User {request.UserName} already exists in database.");
             }
 
-            var newUser = new User()
-            {
-                UserName = request.UserName,
-                Password = _encryptionHelper.EncryptString(request.Password),
-                Name = request.Name
-            };
+            var newUser = _mapper.Map<User>(request);
+            newUser.Password = _encryptionHelper.EncryptString(request.Password);
 
             _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+            var responseData = _mapper.Map<RegisterUserResponseDTO>(newUser);
 
-            return (await _context.SaveChangesAsync() > 0);
+            var returnValue = new GenericResponseDTO<RegisterUserResponseDTO>()
+            {
+                ErrorCode = "000",
+                Message = $"User {request.UserName} was created.",
+                Data = responseData
+            };
+
+            return returnValue;
         }
     }
 }
