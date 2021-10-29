@@ -19,7 +19,7 @@ namespace todos.api.Repository
             _encryptionHelper = encryptionHelper;
         }
 
-        public GenericResponseDTO<string> AuthenticateUser(AuthenticateUserRequestDTO request)
+        public GenericResponseDTO<AuthenticationResponseDTO> AuthenticateUser(AuthenticateUserRequestDTO request)
         {
             var foundUser = _context.Users
                 .FirstOrDefault(user => user.UserName == request.UserName
@@ -30,11 +30,14 @@ namespace todos.api.Repository
                 throw new GenericRepositoryException("002", $"Error authenticating user {request.UserName}.");
             }
 
-            return new GenericResponseDTO<string>()
+            var resp = _mapper.Map<AuthenticationResponseDTO>(foundUser);
+            resp.Token = _encryptionHelper.CreateToken(foundUser);
+
+            return new GenericResponseDTO<AuthenticationResponseDTO>()
             {
                 ErrorCode = "000",
                 Message = $"User {request.UserName} was authenticated correctly.",
-                Data = _encryptionHelper.CreateToken(foundUser)
+                Data = resp
 
             };
         }

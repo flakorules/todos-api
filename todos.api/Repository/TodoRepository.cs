@@ -162,6 +162,51 @@ namespace todos.api.Repository
 
         }
 
+        public async Task<GenericResponseDTO<Todo>> Update(int todoId, UpdateTodoRequestDTO request, string bearerToken)
+        {
+            try 
+            {
+                var foundTodo = _context.Todos.FirstOrDefault(obj => obj.TodoId == todoId);
+                if (foundTodo == null)
+                {
+                    throw new GenericRepositoryException("007", $"todoId {todoId} doesn't exist");
+                }
+
+                var userIdInBearerToken = _encriptionHelper.GetUserIdFromBearerToken(bearerToken);
+                if (userIdInBearerToken != foundTodo.UserId)
+                {
+                    throw new GenericRepositoryException("005", "Not authorized to Update other's todos.");
+                }
+
+                foundTodo.Name = request.Name;
+                foundTodo.Description = request.Description;
+                foundTodo.UpdatedAt = DateTime.Now;
+
+                if (await _context.SaveChangesAsync() > 0)
+                {
+                    return new GenericResponseDTO<Todo>()
+                    {
+                        ErrorCode = "000",
+                        Message = $"Todo {foundTodo.TodoId} was updated succesfully.",
+                        Data = foundTodo
+                    };
+                }
+                else
+                {
+                    return new GenericResponseDTO<Todo>()
+                    {
+                        ErrorCode = "006",
+                        Message = $"Todo {foundTodo.TodoId} was not updated.",
+                        Data = foundTodo
+                    };
+                }
+            }
+            catch (SqlException)
+            {
+                throw new GenericRepositoryException("020", $"Error connecting to the Database.");
+            }
+        }
+
         public GenericResponseDTO<Todo> GetById(int todoId)
         {
             try

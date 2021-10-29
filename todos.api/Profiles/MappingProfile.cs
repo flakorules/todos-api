@@ -16,6 +16,7 @@ namespace todos.api.Profiles
             CreateMap<RegisterUserRequestDTO, User>();
             CreateMap<User, RegisterUserResponseDTO>();
             CreateMap<User, GetUserResponseDTO>();
+            CreateMap<User, AuthenticationResponseDTO>();
             CreateMap<CreateTodoRequestDTO, Todo>();
         }
 

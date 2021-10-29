@@ -73,21 +73,7 @@ namespace todos.api.tests.Controllers
             Assert.True(((GenericResponseDTO<IEnumerable<Todo>>)result.Value).Data.ToList().Count > 0);
         }
 
-        //[Fact]
-        //public async Task GetByUserId_Unauthorized()
-        //{
-        //    //Arrange
-        //    var mockRepo = new Mock<ITodoRepository>();
-        //    var mockHelper = new Mock<IBearerTokenHelper>();
-        //    mockRepo.Setup(repo => repo.GetByUserId(It.IsAny<string>())).Throws(new UnauthorizedException("No está autorizado a ver los Todos de otro usuario."));
-        //    mockHelper.Setup(helper => helper.GetBearerToken(It.IsAny<HttpRequest>())).Returns(fakeToken);
-        //    var controller = new TodoController(mockRepo.Object, mockHelper.Object);
-        //    var expected = new BadRequestObjectResult(new { OK = false, message = "No está autorizado a ver los Todos de otro usuario." });
-        //    //Act
-        //    var result = (BadRequestObjectResult)await controller.GetByUserId();
-        //    //Assert
-        //    Assert.True(expected.Value.ToString().Equals(result.Value.ToString()));
-        //}
+       
 
         [Fact]
         public async Task Create()
@@ -293,6 +279,123 @@ namespace todos.api.tests.Controllers
             var expected = new GenericResponseDTO<IEnumerable<bool>>() {
                 ErrorCode= "005",
                 Message = "Not authorized to Solve other's todos.",
+                Data = null
+            };
+            //Act
+            var result = (BadRequestObjectResult)await controller.Solve(todoId);
+            //Assert
+            Assert.True(expected.Message.Equals(((GenericResponseDTO<IEnumerable<bool>>)result.Value).Message));
+        }
+
+        [Fact]
+        public async Task Update_Successful()
+        {
+            //Arrange
+            var mockRepo = new Mock<ITodoRepository>();
+            var mockHelper = new Mock<IBearerTokenHelper>();
+            mockRepo.Setup(repo => repo.Update(It.IsAny<int>(), It.IsAny<UpdateTodoRequestDTO>(), It.IsAny<string>())).ReturnsAsync(
+                new GenericResponseDTO<Todo>()
+                {
+                    ErrorCode = "000",
+                    Message = "Todo 4 was updated succesfully.",
+                    Data = new Todo()
+                    {
+                        TodoId = 4,
+                        UserId = 1,
+                        Name = "Pasear al perro 2",
+                        Solved = false,
+                        Description = "Pasear al perro 2",
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                    }
+                }
+                );
+
+            mockHelper.Setup(helper => helper.GetBearerToken(It.IsAny<HttpRequest>())).Returns(fakeToken);
+            var controller = new TodoController(mockRepo.Object, mockHelper.Object);
+            var todoId = 4;
+            var expected = new GenericResponseDTO<Todo>()
+            {
+                ErrorCode = "000",
+                Message = "Todo 4 was updated succesfully.",
+                Data = new Todo()
+                {
+                    TodoId = 4,
+                    UserId = 1,
+                    Name = "Pasear al perro 2",
+                    Solved = false,
+                    Description = "Pasear al perro 2",
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                }
+            };
+            //Act
+            var result = (OkObjectResult)await controller.Update(todoId, new UpdateTodoRequestDTO() { Name = "Pasear al perro 2", Description = "Pasear al perro 2" });
+            //Assert
+            Assert.True(expected.Message.Equals(((GenericResponseDTO<Todo>)result.Value).Message));
+        }
+
+        [Fact]
+        public async Task Update_Failed()
+        {
+            //Arrange
+            var mockRepo = new Mock<ITodoRepository>();
+            var mockHelper = new Mock<IBearerTokenHelper>();
+            mockRepo.Setup(repo => repo.Update(It.IsAny<int>(), It.IsAny<UpdateTodoRequestDTO>() ,It.IsAny<string>())).ReturnsAsync(
+                new GenericResponseDTO<Todo>()
+                {
+                    ErrorCode = "006",
+                    Message = "Todo 4 was not updated.",
+                    Data = new Todo()
+                    {
+                        TodoId = 4,
+                        UserId = 1,
+                        Name = "Pasear al perro",
+                        Solved = false,
+                        Description = "Pasear al perro",
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                    }
+                }
+                );
+            mockHelper.Setup(helper => helper.GetBearerToken(It.IsAny<HttpRequest>())).Returns(fakeToken);
+            var controller = new TodoController(mockRepo.Object, mockHelper.Object);
+            var todoId = 4;
+            var expected = new GenericResponseDTO<Todo>()
+            {
+                ErrorCode = "006",
+                Message = "Todo 4 was not updated.",
+                Data = new Todo()
+                {
+                    TodoId = 4,
+                    UserId = 1,
+                    Name = "Pasear al perro",
+                    Solved = false,
+                    Description = "Pasear al perro",
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                }
+            };
+            //Act
+            var result = (OkObjectResult)await controller.Update(todoId, new UpdateTodoRequestDTO() { Name = "Pasear al perro 2", Description = "Pasear al perro 2" });
+            //Assert
+            Assert.True(expected.Message.Equals(((GenericResponseDTO<Todo>)result.Value).Message));
+        }
+
+        [Fact]
+        public async Task Update_Unauthorized()
+        {
+            //Arrange
+            var mockRepo = new Mock<ITodoRepository>();
+            var mockHelper = new Mock<IBearerTokenHelper>();
+            mockRepo.Setup(repo => repo.Solve(It.IsAny<int>(), It.IsAny<string>())).Throws(new GenericRepositoryException("005", "Not authorized to Update other's todos."));
+            mockHelper.Setup(helper => helper.GetBearerToken(It.IsAny<HttpRequest>())).Returns(fakeToken);
+            var controller = new TodoController(mockRepo.Object, mockHelper.Object);
+            var todoId = 4;
+            var expected = new GenericResponseDTO<IEnumerable<bool>>()
+            {
+                ErrorCode = "005",
+                Message = "Not authorized to Update other's todos.",
                 Data = null
             };
             //Act

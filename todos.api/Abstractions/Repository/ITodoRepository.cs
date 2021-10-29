@@ -12,5 +12,6 @@ namespace todos.api.Abstractions.Repository
         Task<GenericResponseDTO<bool>> Delete(int todoId, string bearerToken);
         Task<GenericResponseDTO<IEnumerable<Todo>>> GetByUserId(string bearerToken);
         GenericResponseDTO<Todo> GetById(int todoId);
+        Task<GenericResponseDTO<Todo>> Update(int todoId, UpdateTodoRequestDTO request, string bearerToken);
     }
 }

@@ -160,5 +160,25 @@ namespace todos.api.Controllers
             }
 
         }
+
+        [HttpPut("{todoId}")]
+        public async Task<IActionResult> Update(int todoId, [FromBody]UpdateTodoRequestDTO request)
+        {
+            try
+            {
+                var bearerToken = _bearerTokenHelper.GetBearerToken(Request);
+                var response = await _todoRepository.Update(todoId, request, bearerToken);
+                return Ok(response);
+            }
+            catch (GenericRepositoryException exception)
+            {
+                return BadRequest(new GenericResponseDTO<IEnumerable<bool>>()
+                {
+                    ErrorCode = exception.ErrorCode,
+                    Message = exception.Message,
+                    Data = null
+                });
+            }
+        }
     }
 }

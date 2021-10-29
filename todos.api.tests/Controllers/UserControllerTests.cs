@@ -18,27 +18,37 @@ namespace todos.api.tests.Controllers
         {
             // Arrange
             var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.AuthenticateUser(It.IsAny<AuthenticateUserRequestDTO>())).Returns(new GenericResponseDTO<string>()
+            mockRepo.Setup(repo => repo.AuthenticateUser(It.IsAny<AuthenticateUserRequestDTO>())).Returns(new GenericResponseDTO<AuthenticationResponseDTO>()
             {
                 ErrorCode = "000",
                 Message = "User cristian was authenticated correctly.",
-                Data = fakeToken
+                Data = new AuthenticationResponseDTO()
+                {
+                    UserId = 1,
+                    UserName = "cristian",
+                    Token = fakeToken
+                }
             }
-            );            
+            );
             var controller = new UserController(mockRepo.Object);
             var request = new AuthenticateUserRequestDTO() { UserName = "cristian", Password = "123456" };
-            var expected = new GenericResponseDTO<string>()
+            var expected = new GenericResponseDTO<AuthenticationResponseDTO>()
             {
                 ErrorCode = "000",
                 Message = "User cristian was authenticated correctly.",
-                Data = fakeToken
+                Data = new AuthenticationResponseDTO()
+                {
+                    UserId = 1,
+                    UserName = "cristian",
+                    Token = fakeToken
+                }
             };
 
             // Act
             var result = (OkObjectResult)controller.Authenticate(request);
             // Assert
 
-            Assert.True(expected.Message.Equals(((GenericResponseDTO<string>)result.Value).Message));
+            Assert.True(expected.Message.Equals(((GenericResponseDTO<AuthenticationResponseDTO>)result.Value).Message));
 
         }
 
