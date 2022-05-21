@@ -29,5 +29,5 @@ jobs:
       run: dotnet test --no-build --verbosity normal
     - name: Probar variable de entorno
       env:
-        nombre: ${{ secrets.NOMBRE }}
+        nombre: Cristian
       run: echo "Hola $nombre"
