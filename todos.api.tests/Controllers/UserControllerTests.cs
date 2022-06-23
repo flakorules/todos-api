@@ -5,6 +5,7 @@ using todos.api.Abstractions.Repository;
 using todos.api.Controllers;
 using todos.api.DTO;
 using todos.api.Exceptions.Repository;
+using todos.api.tests.Helpers;
 using Xunit;
 
 namespace todos.api.tests.Controllers
@@ -13,23 +14,20 @@ namespace todos.api.tests.Controllers
     {
         private readonly string fakeToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiIyIiwidW5pcXVlX25hbWUiOiJ0ZXJlc28iLCJuYmYiOjE2MzA3ODA3MjcsImV4cCI6MTYzMDc4NDMyNywiaWF0IjoxNjMwNzgwNzI3fQ.v7r20znyg7LCZHCcZShdmZtRmAqTb9Cz1rLSSWK73Uo";
 
-        [Fact]
+        private readonly Mock<IUserRepository> mockRepo;
+        private readonly Mock<IUserRepository> mockRepoWithExceptions;
+
+        public UserControllerTests()
+        {
+            this.mockRepo = MockHelper.MockUserRepository;
+            this.mockRepoWithExceptions = MockHelper.MockUserRepositoryWithExceptions;
+        }
+
+        [Fact(DisplayName = "Authentication successful")]
+        
         public void Authentication_successful()
         {
             // Arrange
-            var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.AuthenticateUser(It.IsAny<AuthenticateUserRequestDTO>())).Returns(new GenericResponseDTO<AuthenticationResponseDTO>()
-            {
-                ErrorCode = "000",
-                Message = "User cristian was authenticated correctly.",
-                Data = new AuthenticationResponseDTO()
-                {
-                    UserId = 1,
-                    UserName = "cristian",
-                    Token = fakeToken
-                }
-            }
-            );
             var controller = new UserController(mockRepo.Object);
             var request = new AuthenticateUserRequestDTO() { UserName = "cristian", Password = "123456" };
             var expected = new GenericResponseDTO<AuthenticationResponseDTO>()
@@ -52,12 +50,10 @@ namespace todos.api.tests.Controllers
 
         }
 
-        [Fact]
+        [Fact(DisplayName = "Authentication Failed")]
         public void Authentication_Failed()
         {
             // Arrange
-            var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.AuthenticateUser(It.IsAny<AuthenticateUserRequestDTO>())).Throws(new GenericRepositoryException("002", "Error authenticating user cristian."));
             var controller = new UserController(mockRepo.Object);
             var request = new AuthenticateUserRequestDTO() { UserName = "cristian", Password = "123456" };
             var expected = new GenericResponseDTO<string>()
@@ -74,24 +70,10 @@ namespace todos.api.tests.Controllers
 
         }
 
-        [Fact]
+        [Fact(DisplayName = "Register successful")]
         public async Task Register_successful()
         {
             // Arrange
-            var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.RegisterUser(It.IsAny<RegisterUserRequestDTO>())).ReturnsAsync(
-                new GenericResponseDTO<RegisterUserResponseDTO>()
-                {
-                    ErrorCode = "000",
-                    Message = "User cristian was created.",
-                    Data = new RegisterUserResponseDTO()
-                    {
-                        UserId = 1,
-                        UserName = "cristian",
-                        Name = "cristian"
-                    }
-                }
-                );
             var controller = new UserController(mockRepo.Object);
             var request = new RegisterUserRequestDTO() { UserName = "cristian", Password = "123456", Name = "cristian" };
             var expected = new GenericResponseDTO<RegisterUserResponseDTO>()
@@ -114,12 +96,10 @@ namespace todos.api.tests.Controllers
 
         }
 
-        [Fact]
+        [Fact(DisplayName = "Register failed")]
         public async Task Register_failed()
         {
             // Arrange
-            var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.RegisterUser(It.IsAny<RegisterUserRequestDTO>())).Throws(new GenericRepositoryException("001", "User cristian already exists in database."));
             var controller = new UserController(mockRepo.Object);
             var request = new RegisterUserRequestDTO() { UserName = "cristian", Password = "123456", Name = "cristian" };
             var expected = new GenericResponseDTO<RegisterUserResponseDTO>()
@@ -137,20 +117,7 @@ namespace todos.api.tests.Controllers
         [Fact]
         public void GetByUserName_Successful()
         {
-            // Arrange
-            var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Returns(new GenericResponseDTO<GetUserResponseDTO>()
-            {
-                ErrorCode = "000",
-                Message = "User name cristian",
-                Data = new GetUserResponseDTO()
-                {
-                    UserId = 1,
-                    UserName = "cristian",
-                    Name = "cristian"
-                }
-            });
-        
+            // Arrange            
             var controller = new UserController(mockRepo.Object);
             string userName = "cristian";
 
@@ -175,9 +142,7 @@ namespace todos.api.tests.Controllers
         public void GetByUserName_Failed()
         {
             // Arrange
-            var mockRepo = new Mock<IUserRepository>();
-            mockRepo.Setup(repo => repo.GetByUserName(It.IsAny<string>())).Throws(new GenericRepositoryException("003", "User cristian was not found."));
-            var controller = new UserController(mockRepo.Object);
+            var controller = new UserController(mockRepoWithExceptions.Object);
             string userName = "cristian";
             var expected = new GenericResponseDTO<RegisterUserResponseDTO>()
             {

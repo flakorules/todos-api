@@ -20,6 +20,7 @@ using todos.api.Persistency;
 using todos.api.Profiles;
 using todos.api.Repository;
 
+
 namespace todos.api
 {
     public class Startup
@@ -36,7 +37,7 @@ namespace todos.api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<TodosDBContext>(opts => opts.UseSqlServer(Configuration["ConnectionString:TodosDB"]));
+            services.AddDbContext<TodosDBContext>(opts => opts.UseNpgsql(Configuration["ConnectionString:TodosDB"]));
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ITodoRepository, TodoRepository>();
             services.AddScoped<IEncryptionHelper, EncryptionHelper>();
