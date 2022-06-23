@@ -26,10 +26,11 @@ namespace todos.api
     public class Startup
     {
         private readonly string MyCors = "MyCors";
-
+        private readonly ConnectionStringUtility _connectionStringUtility;
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            _connectionStringUtility = new ConnectionStringUtility(Configuration);
         }
 
         public IConfiguration Configuration { get; }
@@ -37,13 +38,27 @@ namespace todos.api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<TodosDBContext>(opts => opts.UseNpgsql(Configuration["ConnectionString:TodosDB"]));
+            var IsDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+
+            var connectionString = _connectionStringUtility.GetConnectionString();
+            services.AddDbContext<TodosDBContext>(opts => opts.UseNpgsql(connectionString));
+            
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<ITodoRepository, TodoRepository>();
             services.AddScoped<IEncryptionHelper, EncryptionHelper>();
             services.AddScoped<IBearerTokenHelper, BearerTokenHelper>();
-            services.Configure<EncryptionConfig>(Configuration.GetSection("Encryption"));
-            services.Configure<JwtConfig>(Configuration.GetSection("Jwt"));
+            services.AddScoped<ConnectionStringUtility>();
+
+            if (IsDevelopment)
+            {
+                services.Configure<EncryptionConfig>(Configuration.GetSection("Encryption"));
+                services.Configure<JwtConfig>(Configuration.GetSection("Jwt"));
+            }
+            else 
+            {
+                services.Configure<EncryptionConfig>(config => config.Key = Environment.GetEnvironmentVariable("ENCRYPTION_KEY"));
+                services.Configure<JwtConfig>(config => config.Key = Environment.GetEnvironmentVariable("JWT_KEY"));
+            }
 
             services.AddAuthentication(x =>
                 {

@@ -1,4 +1,5 @@
 {
+  "$schema": "http://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
@@ -7,14 +8,16 @@
       "sslPort": 0
     }
   },
-  "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DATABASE_URL": "postgres:/zdcsyikfsrnkld:2c75cd82518afd0a8feff037c2af1d1fd7315f1ed8b2d3d5c96613bcae4052c1@ec2-23-23-182-238.compute-1.amazonaws.com:5432/dbc1e63ipj5soq",
+        "JWT_KEY": "PAjDpsJWQ260pMBPgdA4mBzG3fAziuRL",
+        "ENCRYPTION_KEY": "PAjDpsJWQ260pMBPgdA4mBzG3fAziuRL"
       }
     },
     "todos.api": {
@@ -22,16 +25,30 @@
       "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DATABASE_URL": "postgres:/zdcsyikfsrnkld:2c75cd82518afd0a8feff037c2af1d1fd7315f1ed8b2d3d5c96613bcae4052c1@ec2-23-23-182-238.compute-1.amazonaws.com:5432/dbc1e63ipj5soq",
+        "JWT_KEY": "PAjDpsJWQ260pMBPgdA4mBzG3fAziuRL",
+        "ENCRYPTION_KEY": "PAjDpsJWQ260pMBPgdA4mBzG3fAziuRL"
       },
-      "dotnetRunMessages": "true",
-      "applicationUrl": "http://localhost:5000"
+      "applicationUrl": "http://localhost:5000",
+      "dotnetRunMessages": "true"
     },
     "Docker": {
       "commandName": "Docker",
       "launchBrowser": true,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/swagger",
       "publishAllPorts": true
+    },
+    "Prod": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Prod",
+        "DATABASE_URL": "postgres:/zdcsyikfsrnkld:2c75cd82518afd0a8feff037c2af1d1fd7315f1ed8b2d3d5c96613bcae4052c1@ec2-23-23-182-238.compute-1.amazonaws.com:5432/dbc1e63ipj5soq",
+        "JWT_KEY": "PAjDpsJWQ260pMBPgdA4mBzG3fAziuRL",
+        "ENCRYPTION_KEY": "PAjDpsJWQ260pMBPgdA4mBzG3fAziuRL"
+      }
     }
   }
 }
